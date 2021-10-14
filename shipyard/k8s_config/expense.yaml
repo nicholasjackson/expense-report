@@ -45,7 +45,7 @@ spec:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/agent-init-first: "true"
         vault.hashicorp.com/role: "expense"
-        vault.hashicorp.com/agent-inject-token: "true"
+        vault.hashicorp.com/agent-cache-enable: "true"
       labels:
         app: expense
         release: v1
@@ -57,12 +57,12 @@ spec:
           imagePullPolicy: Always
           image: "nicholasjackson/expense-report:expense-latest"
           command: ["/bin/sh"]
-          args: ["-c", "VAULT_TOKEN=$(cat /vault/secrets/token) app/expense-report"]
+          args: ["-c", "/app/expense-report"]
           ports:
             - containerPort: 5001
           env:
             - name: VAULT_ADDR
-              value: "http://vault.default.svc:8200" 
+              value: "http://localhost:8200" 
             - name: LISTEN_ADDR
               value: "0.0.0.0:5001" 
             - name: MYSQL_CONNECTION
