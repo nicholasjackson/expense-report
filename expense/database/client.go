@@ -18,7 +18,10 @@ func New(connection string) (*Client, error) {
 		return nil, err
 	}
 
-	return &Client{db}, nil
+	cl := &Client{db}
+	cl.performMigrations()
+
+	return cl, nil
 }
 
 func (c *Client) GetExpenseItems() ([]Expense, error) {
@@ -37,10 +40,28 @@ func (c *Client) InsertExpense(expense *Expense) error {
 	id := strings.Replace(uuid.String(), "-", "", -1)
 
 	sql := `
-	INSERT INTO expense_item (id, name, trip_id, cost, currency, date, reimbursable)
-	VALUES (?,?,?,?,?,?,?)`
+	INSERT INTO expense_item (id, name, description, trip_id, cost, currency, date, reimbursable)
+	VALUES (?,?,?,?,?,?,?,?)`
 
-	_, err := c.db.Exec(sql, id[:16], expense.Name, expense.TripID, expense.Cost, expense.Currency, expense.Date, expense.Reimbursable)
+	_, err := c.db.Exec(
+		sql,
+		id[:16],
+		expense.Name,
+		expense.Description,
+		expense.TripID,
+		expense.Cost,
+		expense.Currency,
+		expense.Date,
+		expense.Reimbursable,
+	)
 
 	return err
+}
+
+func (c *Client) performMigrations() {
+	sql := `
+ALTER TABLE expense_item
+ADD COLUMN description TEXT AFTER name;
+`
+	c.db.Exec(sql)
 }
