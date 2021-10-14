@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/nicholasjackson/env"
 	"github.com/nicholasjackson/expense-report/expense/database"
-	"github.com/nicholasjackson/expense-report/expense/handlers"
 	"github.com/nicholasjackson/expense-report/expense/vault"
+	"github.com/nicholasjackson/expense-report/report/handlers"
 )
 
 var listenAddress = env.String("LISTEN_ADDR", false, "0.0.0.0:15001", "IP address and port to bind service to")
@@ -46,8 +46,8 @@ func main() {
 	ex := handlers.NewExpense(logger, db, vc)
 
 	r := mux.NewRouter()
+	r.HandleFunc("/health", handlers.HealthHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/expense", ex.HandleGET).Methods(http.MethodGet)
-	r.HandleFunc("/api/expense", ex.HandlePOST).Methods(http.MethodPost)
 	http.Handle("/", r)
 
 	logger.Info("Starting server on", "address", *listenAddress)

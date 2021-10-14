@@ -46,6 +46,7 @@ func main() {
 	ex := handlers.NewExpense(logger, db, vc)
 
 	r := mux.NewRouter()
+	r.HandleFunc("/health", handlers.HealthHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/expense", ex.HandlePOST).Methods(http.MethodPost)
 	http.Handle("/", r)
 

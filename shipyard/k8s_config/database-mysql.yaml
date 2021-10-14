@@ -1,0 +1,59 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: expense-db-mysql
+  labels:
+    app: expense-db-mysql
+    framework: mysql
+spec:
+  selector:
+    app: expense-db-mysql
+    framework: mysql
+  ports:
+    - name: http
+      protocol: TCP
+      port: 3306
+      targetPort: 3306
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: expense-db-mysql
+automountServiceAccountToken: true
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: expense-db-mysql
+  labels:
+    app: expense-db-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: expense-db-mysql
+  template:
+    metadata:
+      labels:
+        app: expense-db-mysql
+        framework: mysql
+    spec:
+      serviceAccountName: expense-db-mysql
+      containers:
+        - name: expense-db-mysql
+          image: "joatmon08/expense-db:mysql-8"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: password
+          ports:
+            - containerPort: 3306
+          command: ["/bin/bash"]
+          args: ["-c", "/usr/local/bin/docker-entrypoint.sh mysqld"]
+          livenessProbe:
+            tcpSocket:
+              port: 3306
+            initialDelaySeconds: 30
+            periodSeconds: 60

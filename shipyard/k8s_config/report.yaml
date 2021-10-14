@@ -1,0 +1,75 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: report
+  labels:
+    app: report
+    release: v1
+  annotations:
+    ingress.kubernetes.io/service-upstream: "true"
+spec:
+  selector:
+    app: report
+    release: v1
+  ports:
+    - name: http
+      protocol: TCP
+      port: 5001
+      targetPort: 5001
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: report
+automountServiceAccountToken: true
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: report
+  labels:
+    app: report
+    release: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: report
+      release: v1
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-init-first: "true"
+        vault.hashicorp.com/role: "report"
+        vault.hashicorp.com/agent-inject-token: "true"
+      labels:
+        app: report
+        release: v1
+        framework: go
+    spec:
+      serviceAccountName: report
+      containers:
+        - name: report
+          imagePullPolicy: Always
+          image: "nicholasjackson/expense-report:report-latest"
+          command: ["/bin/sh"]
+          args: ["-c", "VAULT_TOKEN=$(cat /vault/secrets/token) app/expense-report"]
+          ports:
+            - containerPort: 5001
+          env:
+            - name: VAULT_ADDR
+              value: "http://vault.default.svc:8200" 
+            - name: LISTEN_ADDR
+              value: "0.0.0.0:5001" 
+            - name: MYSQL_CONNECTION
+              value: "root:password@tcp(expense-db-mysql.default.svc:3306)/DemoExpenses" 
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 5
+            periodSeconds: 10
