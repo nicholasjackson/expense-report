@@ -1,4 +1,4 @@
-REPO = nicholasjackson/expense-report:expense-latest
+REPO = nicholasjackson/expense-report:expense-plaintext
 
 build_docker:
 	docker build -t ${REPO} .

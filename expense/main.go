@@ -9,13 +9,10 @@ import (
 	"github.com/nicholasjackson/env"
 	"github.com/nicholasjackson/expense-report/expense/database"
 	"github.com/nicholasjackson/expense-report/expense/handlers"
-	"github.com/nicholasjackson/expense-report/expense/vault"
 )
 
-var listenAddress = env.String("LISTEN_ADDR", false, "0.0.0.0:15001", "IP address and port to bind service to")
+var listenAddress = env.String("LISTEN_ADDR", false, "0.0.0.0:15000", "IP address and port to bind service to")
 var connectionString = env.String("MYSQL_CONNECTION", false, "root:password@tcp(127.0.0.1:3307)/DemoExpenses", "connection string for expense database")
-var vaultToken = env.String("VAULT_TOKEN", false, "root", "token used for connecting to HashiCorp Vault")
-var vaultAddr = env.String("VAULT_ADDR", false, "http://127.0.0.1:8200", "address of the Vault server")
 
 func main() {
 	options := hclog.DefaultOptions
@@ -36,14 +33,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// create the vault client
-	vc, err := vault.New(*vaultAddr, *vaultToken)
-	if err != nil {
-		logger.Error("Unable to create Vault client", "error", err)
-		os.Exit(1)
-	}
-
-	ex := handlers.NewExpense(logger, db, vc)
+	ex := handlers.NewExpense(logger, db)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/health", handlers.HealthHandler).Methods(http.MethodGet)
